@@ -1,6 +1,62 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 
+class WspolczynnikiLevel(tk.Toplevel):
+    def __init__(self):
+        super().__init__()
+        self.geometry("200x410")
+        self.title("Współczynniki")
+        self.styczenlabel = ttk.Label(self, text="Styczeń:")
+        self.styczenlabel.grid(row=0, column=0, padx=20, pady=5)
+        self.styczen = ttk.Entry(self, width=10)
+        self.styczen.grid(row=0, column=1, padx=(0, 20), pady=5)
+        self.lutylabel = ttk.Label(self, text="Luty:")
+        self.lutylabel.grid(row=1, column=0, padx=20, pady=5)
+        self.luty = ttk.Entry(self, width=10)
+        self.luty.grid(row=1, column=1, padx=(0, 20), pady=5)
+        self.marzeclabel = ttk.Label(self, text="Marzec:")
+        self.marzeclabel.grid(row=2, column=0, padx=20, pady=5)
+        self.marzec = ttk.Entry(self, width=10)
+        self.marzec.grid(row=2, column=1, padx=(0, 20), pady=5)
+        self.kwiecienlabel = ttk.Label(self, text="Kwiecień:")
+        self.kwiecienlabel.grid(row=3, column=0, padx=20, pady=5)
+        self.kwiecien = ttk.Entry(self, width=10)
+        self.kwiecien.grid(row=3, column=1, padx=(0, 20), pady=5)
+        self.majlabel = ttk.Label(self, text="Maj:")
+        self.majlabel.grid(row=4, column=0, padx=20, pady=5)
+        self.maj = ttk.Entry(self, width=10)
+        self.maj.grid(row=4, column=1, padx=(0, 20), pady=5)
+        self.czerwieclabel = ttk.Label(self, text="Czerwiec:")
+        self.czerwieclabel.grid(row=5, column=0, padx=20, pady=5)
+        self.czerwiec = ttk.Entry(self, width=10)
+        self.czerwiec.grid(row=5, column=1, padx=(0, 20), pady=5)
+        self.lipieclabel = ttk.Label(self, text="Lipiec:")
+        self.lipieclabel.grid(row=6, column=0, padx=20, pady=5)
+        self.lipiec = ttk.Entry(self, width=10)
+        self.lipiec.grid(row=6, column=1, padx=(0, 20), pady=5)
+        self.sierpienlabel = ttk.Label(self, text="Sierpień:")
+        self.sierpienlabel.grid(row=7, column=0, padx=20, pady=5)
+        self.sierpien = ttk.Entry(self, width=10)
+        self.sierpien.grid(row=7, column=1, padx=(0, 20), pady=5)
+        self.wrzesienlabel = ttk.Label(self, text="Wrzesień:")
+        self.wrzesienlabel.grid(row=8, column=0, padx=20, pady=5)
+        self.wrzesien = ttk.Entry(self, width=10)
+        self.wrzesien.grid(row=8, column=1, padx=(0, 20), pady=5)
+        self.pazdzierniklabel = ttk.Label(self, text="Październik:")
+        self.pazdzierniklabel.grid(row=9, column=0, padx=20, pady=5)
+        self.pazdziernik = ttk.Entry(self, width=10)
+        self.pazdziernik.grid(row=9, column=1, padx=(0, 20), pady=5)
+        self.listopadlabel = ttk.Label(self, text="Listopad:")
+        self.listopadlabel.grid(row=10, column=0, padx=20, pady=5)
+        self.listopad = ttk.Entry(self, width=10)
+        self.listopad.grid(row=10, column=1, padx=(0, 20), pady=5)
+        self.grudzienlabel = ttk.Label(self, text="Grudzień:")
+        self.grudzienlabel.grid(row=11, column=0, padx=20, pady=5)
+        self.grudzien = ttk.Entry(self, width=10)
+        self.grudzien.grid(row=11, column=1, padx=(0, 20), pady=5)
+        self.save = ttk.Button(self, text="Zapisz", width=20)
+        self.save.grid(row=12, column=0, columnspan=2, padx=20, pady=5)
+
 class Application(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -80,7 +136,8 @@ class Application(tk.Tk):
         self.revasoferta.grid_propagate(False)
         self.variable = tk.StringVar()
         self.variable.set("Oferty")
-        self.oferta = ttk.OptionMenu(self.revasoferta, self.variable)
+        self.optionslist = []
+        self.oferta = ttk.OptionMenu(self.revasoferta, self.variable, *self.optionslist)
         self.oferta.grid(row=0, column=0, padx=10, pady=10)
         self.nazwaoferty = ttk.Label(self.revasoferta, text="Nazwa", width=30, anchor="center")
         self.nazwaoferty.grid(row=0, column=1, padx=(0,10))
@@ -133,8 +190,12 @@ class Application(tk.Tk):
         self.dochodcalylabel.grid(row=2, column=5, padx=10, pady=5)
         self.dochodcaly = ttk.Label(self.revas, text="999999")
         self.dochodcaly.grid(row=2, column=6, padx=10, pady=5)
+        self.wspolczynnikitoplevel = None
+        self.open_wspolczynniki()
 
-
-
-app = Application()
-app.mainloop()
+    def open_wspolczynniki(self):
+        if(self.wspolczynnikitoplevel is None or not self.wspolczynnikitoplevel.winfo_exists()):
+            self.wspolczynnikitoplevel = WspolczynnikiLevel()
+            self.wspolczynnikitoplevel.attributes('-topmost', 'true')
+        else:
+            self.wspolczynnikitoplevel.focus()

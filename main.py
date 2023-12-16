@@ -1,7 +1,9 @@
 import os
 import sqlite3
 import pandas as pd
+from gui import *
 
+app = Application()
 documentspath = os.path.expanduser('~\Documents\RevasDataBase')
 isExist = os.path.exists(documentspath)
 if(not isExist):
@@ -10,7 +12,7 @@ if(not isExist):
     cursor = connection.cursor()
     cursor.execute("""
         CREATE TABLE wspolczynnik(
-            wspolczynnik_id integer NOT NULL AUTO_INCREMENT,
+            wspolczynnik_id integer PRIMARY KEY,
             styczen float NOT NULL,
             luty float NOT NULL,
             marzec float NOT NULL,
@@ -22,19 +24,17 @@ if(not isExist):
             wrzesien float NOT NULL,
             pazdziernik float NOT NULL,
             listopad float NOT NULL,
-            grudzie float NOT NULL,
-            PRIMARY KEY (wspolczynnik_id)
+            grudzie float NOT NULL
         )
     """)
     cursor.execute("""
         CREATE TABLE oferty(
-            id integer NOT NULL AUTO_INCREMENT,
+            id integer PRIMARY KEY,
             nazwa string NOT NULL,
             popyt_roczny integer NOT NULL,
             cena_za_usluge integer NOT NULL,
             robogodziny float NOT NULL,
-            wspolczynniki integer,
-            PRIMARY KEY(id)                  
+            wspolczynniki integer               
         )
     """)
     cursor.execute("""
@@ -47,11 +47,10 @@ if(not isExist):
     """)
     cursor.execute("""
         CREATE TABLE pracownicy(
-            id inetger NOT NULL AUTO_INCREMENT,
+            id integer PRIMARY KEY,
             imie string NOT NULL,
             nazwisko string NOT NULL,
-            wynagrodzenie integer NOT NULL,
-            PRIMARY KEY(id)
+            wynagrodzenie integer NOT NULL
         )
     """)
     cursor.execute("""
@@ -61,6 +60,121 @@ if(not isExist):
             miesieczna float NOT NULL
         )
     """)
+    cursor.execute("""
+        CREATE TABLE kredyty(
+            ilosc float NOT NULL,
+            oprocentowanie float NOT NULL,
+            ilosc_rat int NOT NULL
+        )
+    """)
     connection.commit()
+    wspolczynnik_data = {
+        'styczen': [],
+        'luty': [],
+        'marzec': [],
+        'kwiecien': [],
+        'maj': [],
+        'czerwiec': [],
+        'lipiec': [],
+        'sierpien': [],
+        'wrzesien': [],
+        'pazdziernik': [],
+        'listopad': [],
+        'grudzie': []
+    }
+
+    oferty_data = {
+        'nazwa': [],
+        'popyt_roczny': [],
+        'cena_za_usluge': [],
+        'robogodziny': [],
+        'wspolczynniki': []
+    }
+
+    zasoby_data = {
+        'oferta_id': [],
+        'nazwa': [],
+        'jakosc': [],
+        'cena': []
+    }
+
+    pracownicy_data = {
+        'imie': [],
+        'nazwisko': [],
+        'wynagrodzenie': []
+    }
+
+    oplaty_data = {
+        'nazwa': [],
+        'oplata': [],
+        'miesieczna': []
+    }
+
+    kredyty_data = {
+        'ilosc': [],
+        'oprocentowanie': [],
+        'ilosc_rat': []
+    }
+    wspolczynniki = pd.DataFrame(wspolczynnik_data)
+    oferty = pd.DataFrame(oferty_data)
+    zasoby = pd.DataFrame(zasoby_data)
+    pracownicy = pd.DataFrame(pracownicy_data)
+    oplaty = pd.DataFrame(oplaty_data)
+    kredyty = pd.DataFrame(kredyty_data)
 else:
     connection = sqlite3.connect(fr'{documentspath}\revas.db')
+    wspolczynniki = pd.read_sql('SELECT * FROM wspolczynnik', connection)
+    oferty = pd.read_sql('SELECT * FROM oferty', connection, index_col='id')
+    zasoby = pd.read_sql('SELECT * FROM zasoby', connection)
+    pracownicy = pd.read_sql('SELECT * FROM pracownicy', connection)
+    oplaty = pd.read_sql('SELECT * FROM oplaty', connection)
+    kredyty = pd.read_sql('SELECT * FROM kredyty', connection)
+    for index in oferty.index:
+        app.options.append(oferty['nazwa'][index])
+
+def add_ofert():
+    oferta = {
+        'nazwa': [app.nazwa.get()],
+        'popyt_roczny': [int(app.popyt.get())],
+        'cena_za_usluge': [int(app.cena.get())],
+        'robogodziny': [float(app.godziny.get())],
+        'wspolczynniki': [len(oferty.index)]
+        }
+    oferty.loc[len(oferty.index)] = oferta
+    app.nazwa.delete("0", "end")
+    app.popyt.delete("0", "end")
+    app.cena.delete("0", "end")
+    app.godziny.delete("0", "end")
+    #wspolczynniki.loc[len(wspolczynniki.index)] = wspolczynnikidict
+    app.variable.set('')
+    app.oferta['menu'].delete(0,'end')
+    app.optionslist.append(oferta['nazwa'])
+    for opt in app.optionslist:
+        app.oferta['menu'].add_command(label=opt, command=tk._setit(app.variable, opt))
+    app.variable.set(app.optionslist[0])
+
+def save():
+    global wspolczynnikidict
+    wspolczynnikidict = {
+        'styczen': float(app.wspolczynnikitoplevel.styczen.get()),
+        'luty': float(app.wspolczynnikitoplevel.luty.get()),
+        'marzec': float(app.wspolczynnikitoplevel.marzec.get()),
+        'kwiecien': float(app.wspolczynnikitoplevel.kwiecien.get()),
+        'maj': float(app.wspolczynnikitoplevel.maj.get()),
+        'czerwiec': float(app.wspolczynnikitoplevel.czerwiec.get()),
+        'lipiec': float(app.wspolczynnikitoplevel.lipiec.get()),
+        'sierpien': float(app.wspolczynnikitoplevel.sierpien.get()),
+        'wrzesien': float(app.wspolczynnikitoplevel.wrzesien.get()),
+        'pazdziernik': float(app.wspolczynnikitoplevel.pazdziernik.get()),
+        'listopad': float(app.wspolczynnikitoplevel.listopad.get()),
+        'grudzien': float(app.wspolczynnikitoplevel.grudzien.get())
+    }
+
+def check():
+    if(app.wspolczynnikitoplevel is not None and app.wspolczynnikitoplevel.winfo_exists()):
+        app.wspolczynnikitoplevel.save.configure(command=save)
+    app.after(1000, check)
+
+app.after(1000, check)
+app.dodajoferte.configure(command=add_ofert)
+app.mainloop()
