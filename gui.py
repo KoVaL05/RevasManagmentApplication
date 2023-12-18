@@ -4,18 +4,18 @@ import tkinter.ttk as ttk
 class Zasoby(tk.Toplevel):
     def __init__(self):
         super().__init__()
-        self.geometry("400x130")
+        self.geometry("750x130")
         self.title("Zasoby")
         self.resizable(False, False)
         self.variable = tk.StringVar()
         self.zasobylist = []
-        self.zasoby = ttk.Combobox(self, textvariable=self.variable, width=20)
+        self.zasoby = ttk.Combobox(self, textvariable=self.variable, width=40)
         self.zasoby['values'] = self.zasobylist
         self.zasoby['state'] = 'readonly'
-        self.zasoby.grid(row=0, column=0, columnspan=3, padx=10, pady=5)
+        self.zasoby.grid(row=0, column=0, columnspan=5, padx=10, pady=5)
         self.nazwalabel = ttk.Label(self, text="Nazwa")
         self.nazwalabel.grid(row=1, column=0, padx=10, pady=5)
-        self.nazwa = ttk.Entry(self)
+        self.nazwa = ttk.Entry(self, width=19)
         self.nazwa.grid(row=2, column=0, padx=10, pady=5)
         self.jakosclabel = ttk.Label(self, text="Jakość")
         self.jakosclabel.grid(row=1, column=1, padx=10, pady=5)
@@ -25,10 +25,22 @@ class Zasoby(tk.Toplevel):
         self.jakosc.grid(row=2, column=1, padx=10, pady=5)
         self.cenalabel = ttk.Label(self, text="Cena za jednostke")
         self.cenalabel.grid(row=1, column=2, padx=10, pady=5)
-        self.cena = ttk.Spinbox(self, from_=0, to=999999, width=10)
+        self.cena = ttk.Spinbox(self, from_=1, to=999999, width=10)
+        self.cena.insert(0,1)
         self.cena.grid(row=2, column=2, padx=10, pady=5)
-        self.save = ttk.Button(self, text="Zapisz",width=40)
-        self.save.grid(row=3, column=0, columnspan=3, padx=10, pady=5)
+        self.wielkosclabel = ttk.Label(self, text="Wielkość sprzedaży opakowań")
+        self.wielkosclabel.grid(row=1, column=3, padx=10, pady=5)
+        self.wielkosc = ttk.Spinbox(self, from_=1, to=1000, width=10)
+        self.wielkosc.insert(0,1)
+        self.wielkosc.grid(row=2, column=3, padx=10, pady=5)
+        self.potrzebalabel = ttk.Label(self, text="Potrzeba na jednego klienta")
+        self.potrzebalabel.grid(row=1, column=4, padx=10, pady=5)
+        self.potrzeba = ttk.Spinbox(self, from_=1, to=1000, width=10)
+        self.potrzeba.insert(0,1)
+        self.potrzeba.grid(row=2, column=4, padx=10, pady=5)
+        self.add = ttk.Button(self, text="Dodaj zasób", width=40)
+        self.add.grid(row=3, column=0, columnspan=5, padx=10, pady=5)
+
     
     def change_scale(self, value):
         if(float(value)>1):
@@ -39,6 +51,7 @@ class Zasoby(tk.Toplevel):
             self.selected_value.set(2)
         if(float(value)<2):
             self.selected_value.set(1)
+
 
 class WspolczynnikiLevel(tk.Toplevel):
     def __init__(self):
@@ -112,9 +125,11 @@ class Application(tk.Tk):
         self.oferty = ttk.Frame(self.options)
         self.pracownicy = ttk.Frame(self.options)
         self.oplaty = ttk.Frame(self.options)
+        self.kredyty = ttk.Frame(self.options)
         self.options.add(self.oferty, text="Oferty")
         self.options.add(self.pracownicy, text="Pracownicy")
         self.options.add(self.oplaty, text="Opłaty")
+        self.options.add(self.kredyty, text="Kredyt")
         self.options.pack(expand=1, fill='both')
         #Oferty
         self.nazwalabel = ttk.Label(self.oferty, text="Nazwa")
@@ -139,7 +154,7 @@ class Application(tk.Tk):
         self.wspolczynnik.grid(row=1, column=4, padx=10, pady=5)
         self.dodajzasobylabel = ttk.Label(self.oferty, text="Zasoby")
         self.dodajzasobylabel.grid(row=0, column=5, padx=10)
-        self.dodajzasoby = ttk.Button(self.oferty, text="Otwórz Menu")
+        self.dodajzasoby = ttk.Button(self.oferty, text="Otwórz Menu", command=self.open_zasoby)
         self.dodajzasoby.grid(row=1, column=5, padx=10, pady=5)
         self.dodajoferte = ttk.Button(self.oferty, text="Dodaj oferte")
         self.dodajoferte.grid(row=0, rowspan=2, column=6, padx=10, pady=10)
@@ -173,6 +188,28 @@ class Application(tk.Tk):
         self.oplatamiesieczna.grid(row=1, column=2, padx=15, pady=5)
         self.dodajoplate = ttk.Button(self.oplaty, text="Dodaj opłate", width=20)
         self.dodajoplate.grid(row=0, rowspan=2, column=3, padx=15, pady=10)
+        #Kredyty
+        self.kredytidlabel = ttk.Label(self.kredyty, text="ID")
+        self.kredytidlabel.grid(row=0, column=0, padx=10)
+        self.kredytid = ttk.Entry(self.kredyty, state='disabled', width=10)
+        self.kredytid.grid(row=1, column=0, padx=10, pady=5)
+        self.ilosclabel = ttk.Label(self.kredyty, text="Ilość kredytu")
+        self.ilosclabel.grid(row=0, column=1, padx=10)
+        self.ilosc = ttk.Spinbox(self.kredyty, from_=1, to=999999, width=10)
+        self.ilosc.insert(0,1)
+        self.ilosc.grid(row=1, column=1, padx=10, pady=5)
+        self.oprocentowanielabel = ttk.Label(self.kredyty, text="Oprocentowanie(%)")
+        self.oprocentowanielabel.grid(row=0, column=2, padx=10)
+        self.oprocentowanie = ttk.Spinbox(self.kredyty, from_=1, to=20, width=10)
+        self.oprocentowanie.insert(0,1)
+        self.oprocentowanie.grid(row=1, column=2, padx=10, pady=5)
+        self.iloscratlabel = ttk.Label(self.kredyty, text="Ilość rat")
+        self.iloscratlabel.grid(row=0, column=3, padx=10)
+        self.iloscrat = ttk.Spinbox(self.kredyty, from_=1, to=6, width=10)
+        self.iloscrat.insert(0,1)
+        self.iloscrat.grid(row=1, column=3, padx=10, pady=5)
+        self.addkredyt = ttk.Button(self.kredyty, text="Dodaj kredyt")
+        self.addkredyt.grid(row=0, rowspan=2, column=4, padx=15, pady=10)
         #------------------------------------------------------------------
         self.revas = ttk.LabelFrame(self, text="Revas", width=880, height=200)
         self.revas.grid(row=1, column=0, columnspan=2, padx=10)
@@ -239,7 +276,7 @@ class Application(tk.Tk):
         self.dochodcaly.grid(row=2, column=6, padx=10, pady=5)
         self.wspolczynnikitoplevel = None
         self.zasobytoplevel = None
-        self.open_zasoby()
+
 
     def open_wspolczynniki(self):
         if(self.wspolczynnikitoplevel is None or not self.wspolczynnikitoplevel.winfo_exists()):

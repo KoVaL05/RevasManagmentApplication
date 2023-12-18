@@ -42,7 +42,9 @@ if(not isExist):
             oferta_id integer NOT NULL,
             nazwa string NOT NULL,
             jakosc integer NOT_NULL,
-            cena float NOT_NULL
+            cena float NOT_NULL,
+            sprzedaz integer NOT NULL,
+            jednostka integer NOT NULL
         )
     """)
     cursor.execute("""
@@ -57,14 +59,16 @@ if(not isExist):
         CREATE TABLE oplaty(
             nazwa string NOT NULL,
             oplata float NOT NULL,
-            miesieczna float NOT NULL
+            miesieczna float NOT NULL,
+            miesiac string NOT NULL
         )
     """)
     cursor.execute("""
         CREATE TABLE kredyty(
             ilosc float NOT NULL,
             oprocentowanie float NOT NULL,
-            ilosc_rat int NOT NULL
+            ilosc_rat int NOT NULL,
+            miesiac string NOT NULL
         )
     """)
     connection.commit()
@@ -95,7 +99,9 @@ if(not isExist):
         'oferta_id': [],
         'nazwa': [],
         'jakosc': [],
-        'cena': []
+        'cena': [],
+        'sprzedaz': [],
+        'jednostka': []
     }
 
     pracownicy_data = {
@@ -107,13 +113,15 @@ if(not isExist):
     oplaty_data = {
         'nazwa': [],
         'oplata': [],
-        'miesieczna': []
+        'miesieczna': [],
+        'miesiac': []
     }
 
     kredyty_data = {
         'ilosc': [],
         'oprocentowanie': [],
-        'ilosc_rat': []
+        'ilosc_rat': [],
+        'miesiac': []
     }
     wspolczynniki = pd.DataFrame(wspolczynnik_data)
     oferty = pd.DataFrame(oferty_data)
@@ -149,17 +157,31 @@ def add_ofert():
     app.optionslist.append(oferta['nazwa'])
     app.oferta['values'] = app.optionslist
 
-def save_zasoby():
-    global zasobydict
-    try:
-        zasobydict = {
-            'oferta_id': len(oferty.index),
-            'nazwa': app.zasobytoplevel.nazwa.get(),
-            'jakosc': int(app.zasobytoplevel.selected_value.get()),
-            'cena': float(app.zasobytoplevel.cena.get())
-        }
-    except ValueError:
-        zasobydict = {}
+def add():
+    if(int(app.zasobytoplevel.selected_value.get())==1):
+        jakosc = "⭐"
+    elif(int(app.zasobytoplevel.selected_value.get())==2):
+        jakosc = "⭐⭐"
+    elif(int(app.zasobytoplevel.selected_value.get())==3):
+        jakosc = "⭐⭐⭐"
+    app.zasobytoplevel.zasobylist.append(f'Nazwa: {app.zasobytoplevel.nazwa.get()} | Jakość: {jakosc}')
+    app.zasobytoplevel.zasoby['values'] = app.zasobytoplevel.zasobylist
+    zasob = {
+        'oferta_id': len(oferty.index),
+        'nazwa': app.zasobytoplevel.nazwa.get(),
+        'jakosc': int(app.zasobytoplevel.selected_value.get()),
+        'cena': float(app.zasobytoplevel.cena.get()),
+        'sprzedaz': int(app.zasobytoplevel.wielkosc.get()),
+        'jednostka': int(app.zasobytoplevel.potrzeba.get())
+    }
+    zasoby.loc[len(zasoby.index)] = zasob
+    app.zasobytoplevel.nazwa.delete("0", "end")
+    app.zasobytoplevel.cena.delete("0", "end")
+    app.zasobytoplevel.cena.insert(0,1)
+    app.zasobytoplevel.wielkosc.delete("0", "end")
+    app.zasobytoplevel.wielkosc.insert(0,1)
+    app.zasobytoplevel.potrzeba.delete("0", "end")
+    app.zasobytoplevel.potrzeba.insert(0,1)
 
 def save():
     global wspolczynnikidict
@@ -181,7 +203,7 @@ def save():
     except ValueError:
         wspolczynnikidict = {}
 
-def menu(*args, **kwargs):
+def menu(*args):
     oferta = oferty.iloc[app.oferta.current()]
     wspolczynnik = wspolczynniki.iloc[oferta['wspolczynniki']]
     app.nazwaoferty.configure(text=oferta['nazwa'])
@@ -191,29 +213,55 @@ def menu(*args, **kwargs):
     godziny = oferta['robogodziny'] * popyt
     app.sqlgodziny.configure(text=godziny)
     przychod = oferta['cena_za_usluge'] * popyt
+    calyprzychod += przychod
     app.sqlprzychod.configure(text=przychod)
+    cenazazasoby = 0
+    for index, row in zasoby.iterrows():
+        cena = popyt * row['jednostka'] / row['sprzedaz'] * row['cena']
+        cenazazasoby += cena
+    dochod = przychod - cenazazasoby
+    calydochod += dochod
+    app.sqldochod.configure(text=dochod)
+
+def menu_zasoby(*args):
+    pass
 
 def check():
     global wspolczynnikidict
     if(app.wspolczynnikitoplevel is not None and app.wspolczynnikitoplevel.winfo_exists()):
         app.wspolczynnikitoplevel.save.configure(command=save)
-    if(len(wspolczynnikidict)>0 and app.nazwa.get() != "" 
+    if(len(wspolczynnikidict)>0 
+       and len(zasoby)>0
+       and app.nazwa.get() != "" 
        and app.popyt.get() != "" 
        and app.cena.get() != ""
        and app.godziny.get() != ""):
         app.dodajoferte.configure(command=add_ofert)
+    if(app.zasobytoplevel is not None and app.zasobytoplevel.winfo_exists()):
+        if(app.zasobytoplevel.nazwa.get() != ""):
+            app.zasobytoplevel.add.configure(command=add)
+    zasobylabel = []
+    for index, row in zasoby.iterrows():
+        zasobylabel.append(row['nazwa'])
+    app.zasoby.configure(text=zasobylabel if(len(zasobylabel)>0) else "[]")
+    app.przychodcaly.configure(text=calyprzychod)
+    app.dochodcaly.configure(text=calydochod)
     app.after(1000, check)
 
 def to_sql():
-    wspolczynniki.to_sql(name='wspolczynniki', con=connection, if_exists='append', index=False)
-    oferty.to_sql(name='oferty', con=connection, if_exists='append', index=False)
-    zasoby.to_sql(name='zasoby', con=connection, if_exists='append', index=False)
-    pracownicy.to_sql(name='pracownicy', con=connection, if_exists='append', index=False)
-    oplaty.to_sql(name='oplaty', con=connection, if_exists='append', index=False)
-    kredyty.to_sql(name='kredyty', con=connection, if_exists='append', index=False)
-    connection.close()
+    if(len(oferty)>=1):
+        oferty.to_sql(name='oferty', con=connection, if_exists='append', index=False)
+        wspolczynniki.to_sql(name='wspolczynniki', con=connection, if_exists='append', index=False)
+        zasoby.to_sql(name='zasoby', con=connection, if_exists='append', index=False)
+        pracownicy.to_sql(name='pracownicy', con=connection, if_exists='append', index=False)
+        oplaty.to_sql(name='oplaty', con=connection, if_exists='append', index=False)
+        kredyty.to_sql(name='kredyty', con=connection, if_exists='append', index=False)
+        connection.close()
 
 global wspolczynnikidict
+global calyprzychod, calydochod
+calyprzychod = 0
+calydochod = 0
 wspolczynnikidict = {}
 app.after(1000, check)
 app.variable.trace_add('write', menu)
