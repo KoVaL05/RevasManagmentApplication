@@ -134,47 +134,88 @@ else:
 
 def add_ofert():
     oferta = {
-        'nazwa': [app.nazwa.get()],
-        'popyt_roczny': [int(app.popyt.get())],
-        'cena_za_usluge': [int(app.cena.get())],
-        'robogodziny': [float(app.godziny.get())],
-        'wspolczynniki': [len(oferty.index)]
+        'nazwa': app.nazwa.get(),
+        'popyt_roczny': int(app.popyt.get()),
+        'cena_za_usluge': int(app.cena.get()),
+        'robogodziny': float(app.godziny.get()),
+        'wspolczynniki': len(oferty.index)
         }
     oferty.loc[len(oferty.index)] = oferta
     app.nazwa.delete("0", "end")
     app.popyt.delete("0", "end")
     app.cena.delete("0", "end")
     app.godziny.delete("0", "end")
-    #wspolczynniki.loc[len(wspolczynniki.index)] = wspolczynnikidict
-    app.variable.set('')
-    app.oferta['menu'].delete(0,'end')
+    wspolczynniki.loc[len(wspolczynniki.index)] = wspolczynnikidict
     app.optionslist.append(oferta['nazwa'])
-    for opt in app.optionslist:
-        app.oferta['menu'].add_command(label=opt, command=tk._setit(app.variable, opt))
-    app.variable.set(app.optionslist[0])
+    app.oferta['values'] = app.optionslist
+
+def save_zasoby():
+    global zasobydict
+    try:
+        zasobydict = {
+            'oferta_id': len(oferty.index),
+            'nazwa': app.zasobytoplevel.nazwa.get(),
+            'jakosc': int(app.zasobytoplevel.selected_value.get()),
+            'cena': float(app.zasobytoplevel.cena.get())
+        }
+    except ValueError:
+        zasobydict = {}
 
 def save():
     global wspolczynnikidict
-    wspolczynnikidict = {
-        'styczen': float(app.wspolczynnikitoplevel.styczen.get()),
-        'luty': float(app.wspolczynnikitoplevel.luty.get()),
-        'marzec': float(app.wspolczynnikitoplevel.marzec.get()),
-        'kwiecien': float(app.wspolczynnikitoplevel.kwiecien.get()),
-        'maj': float(app.wspolczynnikitoplevel.maj.get()),
-        'czerwiec': float(app.wspolczynnikitoplevel.czerwiec.get()),
-        'lipiec': float(app.wspolczynnikitoplevel.lipiec.get()),
-        'sierpien': float(app.wspolczynnikitoplevel.sierpien.get()),
-        'wrzesien': float(app.wspolczynnikitoplevel.wrzesien.get()),
-        'pazdziernik': float(app.wspolczynnikitoplevel.pazdziernik.get()),
-        'listopad': float(app.wspolczynnikitoplevel.listopad.get()),
-        'grudzien': float(app.wspolczynnikitoplevel.grudzien.get())
-    }
+    try:
+        wspolczynnikidict = {
+            'styczen': float(app.wspolczynnikitoplevel.styczen.get()),
+            'luty': float(app.wspolczynnikitoplevel.luty.get()),
+            'marzec': float(app.wspolczynnikitoplevel.marzec.get()),
+            'kwiecien': float(app.wspolczynnikitoplevel.kwiecien.get()),
+            'maj': float(app.wspolczynnikitoplevel.maj.get()),
+            'czerwiec': float(app.wspolczynnikitoplevel.czerwiec.get()),
+            'lipiec': float(app.wspolczynnikitoplevel.lipiec.get()),
+            'sierpien': float(app.wspolczynnikitoplevel.sierpien.get()),
+            'wrzesien': float(app.wspolczynnikitoplevel.wrzesien.get()),
+            'pazdziernik': float(app.wspolczynnikitoplevel.pazdziernik.get()),
+            'listopad': float(app.wspolczynnikitoplevel.listopad.get()),
+            'grudzien': float(app.wspolczynnikitoplevel.grudzien.get())
+        }
+    except ValueError:
+        wspolczynnikidict = {}
+
+def menu(*args, **kwargs):
+    oferta = oferty.iloc[app.oferta.current()]
+    wspolczynnik = wspolczynniki.iloc[oferta['wspolczynniki']]
+    app.nazwaoferty.configure(text=oferta['nazwa'])
+    round = app.round.cget("text")
+    popyt = oferta['popyt_roczny'] / 12 * wspolczynnik[round.lower()]
+    app.sqlpopyt.configure(text=popyt)
+    godziny = oferta['robogodziny'] * popyt
+    app.sqlgodziny.configure(text=godziny)
+    przychod = oferta['cena_za_usluge'] * popyt
+    app.sqlprzychod.configure(text=przychod)
 
 def check():
+    global wspolczynnikidict
     if(app.wspolczynnikitoplevel is not None and app.wspolczynnikitoplevel.winfo_exists()):
         app.wspolczynnikitoplevel.save.configure(command=save)
+    if(len(wspolczynnikidict)>0 and app.nazwa.get() != "" 
+       and app.popyt.get() != "" 
+       and app.cena.get() != ""
+       and app.godziny.get() != ""):
+        app.dodajoferte.configure(command=add_ofert)
     app.after(1000, check)
 
+def to_sql():
+    wspolczynniki.to_sql(name='wspolczynniki', con=connection, if_exists='append', index=False)
+    oferty.to_sql(name='oferty', con=connection, if_exists='append', index=False)
+    zasoby.to_sql(name='zasoby', con=connection, if_exists='append', index=False)
+    pracownicy.to_sql(name='pracownicy', con=connection, if_exists='append', index=False)
+    oplaty.to_sql(name='oplaty', con=connection, if_exists='append', index=False)
+    kredyty.to_sql(name='kredyty', con=connection, if_exists='append', index=False)
+    connection.close()
+
+global wspolczynnikidict
+wspolczynnikidict = {}
 app.after(1000, check)
-app.dodajoferte.configure(command=add_ofert)
+app.variable.trace_add('write', menu)
 app.mainloop()
+app.variable.trace_remove('write', 'menu')

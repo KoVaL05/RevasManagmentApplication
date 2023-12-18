@@ -1,11 +1,51 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 
+class Zasoby(tk.Toplevel):
+    def __init__(self):
+        super().__init__()
+        self.geometry("400x130")
+        self.title("Zasoby")
+        self.resizable(False, False)
+        self.variable = tk.StringVar()
+        self.zasobylist = []
+        self.zasoby = ttk.Combobox(self, textvariable=self.variable, width=20)
+        self.zasoby['values'] = self.zasobylist
+        self.zasoby['state'] = 'readonly'
+        self.zasoby.grid(row=0, column=0, columnspan=3, padx=10, pady=5)
+        self.nazwalabel = ttk.Label(self, text="Nazwa")
+        self.nazwalabel.grid(row=1, column=0, padx=10, pady=5)
+        self.nazwa = ttk.Entry(self)
+        self.nazwa.grid(row=2, column=0, padx=10, pady=5)
+        self.jakosclabel = ttk.Label(self, text="Jakość")
+        self.jakosclabel.grid(row=1, column=1, padx=10, pady=5)
+        self.selected_value = tk.IntVar()
+        self.selected_value.set(1)
+        self.jakosc = ttk.Scale(self, from_=1, to=3, orient='horizontal', command=self.change_scale, variable=self.selected_value)
+        self.jakosc.grid(row=2, column=1, padx=10, pady=5)
+        self.cenalabel = ttk.Label(self, text="Cena za jednostke")
+        self.cenalabel.grid(row=1, column=2, padx=10, pady=5)
+        self.cena = ttk.Spinbox(self, from_=0, to=999999, width=10)
+        self.cena.grid(row=2, column=2, padx=10, pady=5)
+        self.save = ttk.Button(self, text="Zapisz",width=40)
+        self.save.grid(row=3, column=0, columnspan=3, padx=10, pady=5)
+    
+    def change_scale(self, value):
+        if(float(value)>1):
+            self.selected_value.set(1)
+        if(float(value)>2):
+            self.selected_value.set(3)
+        if(float(value)<3):
+            self.selected_value.set(2)
+        if(float(value)<2):
+            self.selected_value.set(1)
+
 class WspolczynnikiLevel(tk.Toplevel):
     def __init__(self):
         super().__init__()
         self.geometry("200x410")
         self.title("Współczynniki")
+        self.resizable(False, False)
         self.styczenlabel = ttk.Label(self, text="Styczeń:")
         self.styczenlabel.grid(row=0, column=0, padx=20, pady=5)
         self.styczen = ttk.Entry(self, width=10)
@@ -62,11 +102,13 @@ class Application(tk.Tk):
         super().__init__()
         self.geometry("900x325")
         self.title("RevasManager")
-        self.frameconfig = ttk.LabelFrame(self, text="Konfiguruj", width=625, height=50)
+        self.frameconfig = ttk.LabelFrame(self, text="Konfiguruj", width=725, height=50)
         self.frameconfig.grid(row=0, column=0, padx=(10, 2), pady=10)
-        self.roundframe = ttk.LabelFrame(self, text="Runda", width=240, height=95)
+        self.roundframe = ttk.LabelFrame(self, text="Runda", width=140, height=95)
         self.roundframe.grid(row=0, column=1, padx=(5, 10))
-        self.options = ttk.Notebook(self.frameconfig, width=625, height=50)
+        self.round = ttk.Label(self.roundframe, text="Maj")
+        self.round.place(relx=0.5, rely=0.5, anchor='center')
+        self.options = ttk.Notebook(self.frameconfig, width=725, height=50)
         self.oferty = ttk.Frame(self.options)
         self.pracownicy = ttk.Frame(self.options)
         self.oplaty = ttk.Frame(self.options)
@@ -93,10 +135,14 @@ class Application(tk.Tk):
         self.godziny.grid(row=1, column=3, padx=10, pady=5)
         self.wspolczynniklabel = ttk.Label(self.oferty, text="Współczynniki")
         self.wspolczynniklabel.grid(row=0, column=4, padx=10)
-        self.wspolczynnik = ttk.Button(self.oferty, text="Otwórz Menu")
+        self.wspolczynnik = ttk.Button(self.oferty, text="Otwórz Menu", command=self.open_wspolczynniki)
         self.wspolczynnik.grid(row=1, column=4, padx=10, pady=5)
+        self.dodajzasobylabel = ttk.Label(self.oferty, text="Zasoby")
+        self.dodajzasobylabel.grid(row=0, column=5, padx=10)
+        self.dodajzasoby = ttk.Button(self.oferty, text="Otwórz Menu")
+        self.dodajzasoby.grid(row=1, column=5, padx=10, pady=5)
         self.dodajoferte = ttk.Button(self.oferty, text="Dodaj oferte")
-        self.dodajoferte.grid(row=0, rowspan=2, column=5, padx=10, pady=10)
+        self.dodajoferte.grid(row=0, rowspan=2, column=6, padx=10, pady=10)
         #Pracownicy
         self.imielable = ttk.Label(self.pracownicy, text="Imie")
         self.imielable.grid(row=0, column=0, padx=15)
@@ -135,9 +181,10 @@ class Application(tk.Tk):
         self.revasoferta.grid(row=0, rowspan=3, column=0, padx=5)
         self.revasoferta.grid_propagate(False)
         self.variable = tk.StringVar()
-        self.variable.set("Oferty")
         self.optionslist = []
-        self.oferta = ttk.OptionMenu(self.revasoferta, self.variable, *self.optionslist)
+        self.oferta = ttk.Combobox(self.revasoferta, textvariable=self.variable, width=10)
+        self.oferta['values'] = self.optionslist
+        self.oferta['state'] = 'readonly'
         self.oferta.grid(row=0, column=0, padx=10, pady=10)
         self.nazwaoferty = ttk.Label(self.revasoferta, text="Nazwa", width=30, anchor="center")
         self.nazwaoferty.grid(row=0, column=1, padx=(0,10))
@@ -191,7 +238,8 @@ class Application(tk.Tk):
         self.dochodcaly = ttk.Label(self.revas, text="999999")
         self.dochodcaly.grid(row=2, column=6, padx=10, pady=5)
         self.wspolczynnikitoplevel = None
-        self.open_wspolczynniki()
+        self.zasobytoplevel = None
+        self.open_zasoby()
 
     def open_wspolczynniki(self):
         if(self.wspolczynnikitoplevel is None or not self.wspolczynnikitoplevel.winfo_exists()):
@@ -199,3 +247,10 @@ class Application(tk.Tk):
             self.wspolczynnikitoplevel.attributes('-topmost', 'true')
         else:
             self.wspolczynnikitoplevel.focus()
+
+    def open_zasoby(self):
+        if(self.zasobytoplevel is None or not self.zasobytoplevel.winfo_exists()):
+            self.zasobytoplevel = Zasoby()
+            self.zasobytoplevel.attributes('-topmost', 'true')
+        else:
+            self.zasobytoplevel.focus()
