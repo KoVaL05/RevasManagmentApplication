@@ -204,6 +204,7 @@ def save():
         wspolczynnikidict = {}
 
 def menu(*args):
+    global calyprzychod, calydochod
     oferta = oferty.iloc[app.oferta.current()]
     wspolczynnik = wspolczynniki.iloc[oferta['wspolczynniki']]
     app.nazwaoferty.configure(text=oferta['nazwa'])
@@ -217,8 +218,9 @@ def menu(*args):
     app.sqlprzychod.configure(text=przychod)
     cenazazasoby = 0
     for index, row in zasoby.iterrows():
-        cena = popyt * row['jednostka'] / row['sprzedaz'] * row['cena']
-        cenazazasoby += cena
+        if(row['oferta_id'] == len(oferty.index)):
+            cena = popyt * row['jednostka'] / row['sprzedaz'] * row['cena']
+            cenazazasoby += cena
     dochod = przychod - cenazazasoby
     calydochod += dochod
     app.sqldochod.configure(text=dochod)
@@ -246,10 +248,27 @@ def check():
     app.zasoby.configure(text=zasobylabel if(len(zasobylabel)>0) else "[]")
     app.przychodcaly.configure(text=calyprzychod)
     app.dochodcaly.configure(text=calydochod)
+    calykoszt = 0
+    if(len(oferty.index)>0):
+        for index, row in zasoby.iterrows():
+            if(row['oferta_id'] < len(oferty.index)):
+                oferta = oferty.iloc[row['oferta_id']]
+                wspolczynnik = wspolczynniki.iloc[oferta['wspolczynniki']]
+                round = app.round.cget("text")
+                popyt = oferta['popyt_roczny'] / 12 * wspolczynnik[round.lower()]
+                cena = popyt * row['jednostka'] / row['sprzedaz'] * row['cena']
+                calykoszt +=  cena
+            else: break
+    app.koszt.configure(text=calykoszt)
+    if(len(kredyty.index)>1):
+        app.kredytyid.configure(state='normal')
+        app.kredytyid.delete("0", "end")
+        app.kredytyid.insert("0", len(kredyty))
+        app.kredytyid.configure(state='disabled')
     app.after(1000, check)
 
 def to_sql():
-    if(len(oferty)>=1):
+    if(len(oferty.index)>=1):
         oferty.to_sql(name='oferty', con=connection, if_exists='append', index=False)
         wspolczynniki.to_sql(name='wspolczynniki', con=connection, if_exists='append', index=False)
         zasoby.to_sql(name='zasoby', con=connection, if_exists='append', index=False)
@@ -259,9 +278,10 @@ def to_sql():
         connection.close()
 
 global wspolczynnikidict
-global calyprzychod, calydochod
+global calyprzychod, calydochod, calykoszt
 calyprzychod = 0
 calydochod = 0
+calykoszt = 0
 wspolczynnikidict = {}
 app.after(1000, check)
 app.variable.trace_add('write', menu)

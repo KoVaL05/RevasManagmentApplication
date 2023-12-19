@@ -191,7 +191,9 @@ class Application(tk.Tk):
         #Kredyty
         self.kredytidlabel = ttk.Label(self.kredyty, text="ID")
         self.kredytidlabel.grid(row=0, column=0, padx=10)
-        self.kredytid = ttk.Entry(self.kredyty, state='disabled', width=10)
+        self.kredytid = ttk.Entry(self.kredyty, width=10)
+        self.kredytid.insert("0", "1")
+        self.kredytid.configure(state='disabled')
         self.kredytid.grid(row=1, column=0, padx=10, pady=5)
         self.ilosclabel = ttk.Label(self.kredyty, text="Ilość kredytu")
         self.ilosclabel.grid(row=0, column=1, padx=10)
@@ -208,7 +210,7 @@ class Application(tk.Tk):
         self.iloscrat = ttk.Spinbox(self.kredyty, from_=1, to=6, width=10)
         self.iloscrat.insert(0,1)
         self.iloscrat.grid(row=1, column=3, padx=10, pady=5)
-        self.addkredyt = ttk.Button(self.kredyty, text="Dodaj kredyt")
+        self.addkredyt = ttk.Button(self.kredyty, text="Dodaj kredyt", width=20)
         self.addkredyt.grid(row=0, rowspan=2, column=4, padx=15, pady=10)
         #------------------------------------------------------------------
         self.revas = ttk.LabelFrame(self, text="Revas", width=880, height=200)
