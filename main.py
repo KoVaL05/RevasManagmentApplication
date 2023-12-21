@@ -4,6 +4,20 @@ import pandas as pd
 from gui import *
 
 app = Application()
+miesiace = [
+    'styczen',
+    'luty',
+    'marzec',
+    'kwiecien',
+    'maj',
+    'czerwiec',
+    'lipiec',
+    'sierpien',
+    'wrzesien',
+    'pazdziernik',
+    'listopad',
+    'grudzien'
+]
 documentspath = os.path.expanduser('~\Documents\RevasDataBase')
 isExist = os.path.exists(documentspath)
 if(not isExist):
@@ -157,6 +171,22 @@ def add_ofert():
     app.optionslist.append(oferta['nazwa'])
     app.oferta['values'] = app.optionslist
 
+def add_kredyt():
+    kredyt = {
+        'ilosc': app.ilosc.get(),
+        'oprocentowanie': app.oprocentowanie.get(),
+        'ilosc_rat': app.iloscrat.get(),
+        'miesiac': app.round.cget("text")
+    }   
+    kredyty.loc[len(kredyty.index)] = kredyt
+    app.ilosc.delete("0", "end")
+    app.ilosc.insert(0,1)
+    app.oprocentowanie.delete("0", "end")
+    app.oprocentowanie.insert(0,1)
+    app.iloscrat.delete("0", "end")
+    app.iloscrat.insert(0,1)
+    print(kredyty)
+
 def add():
     if(int(app.zasobytoplevel.selected_value.get())==1):
         jakosc = "⭐"
@@ -203,6 +233,32 @@ def save():
     except ValueError:
         wspolczynnikidict = {}
 
+def add_pracownicy():
+    pracownik = {
+        'imie': app.imie.get(),
+        'nazwisko': app.nazwisko.get(),
+        'wynagrodzenie': int(app.wynagrodzenie.get())
+    }
+    pracownicy.loc[len(pracownicy.index)] = pracownik
+    app.imie.delete("0", "end")
+    app.nazwisko.delete("0", "end")
+    app.wynagrodzenie.delete("0", "end")
+    app.wynagrodzenie.insert(0,1)
+
+def add_oplaty():
+    oplata = {
+        'nazwa': app.nazwaoplaty.get(),
+        'oplata': app.oplata.get(),
+        'miesieczna': app.oplatamiesieczna.get(),
+        'miesiac': app.round.cget("text")
+    }
+    oplaty.loc[len(oplaty.index)] = oplata
+    app.nazwaoplaty.delete("0", "end")
+    app.oplata.delete("0", "end")
+    app.oplata.insert(0,1)
+    app.oplatamiesieczna.delete("0", "end")
+    app.oplatamiesieczna.insert(0,1)
+
 def menu(*args):
     global calyprzychod, calydochod
     oferta = oferty.iloc[app.oferta.current()]
@@ -239,9 +295,18 @@ def check():
        and app.cena.get() != ""
        and app.godziny.get() != ""):
         app.dodajoferte.configure(command=add_ofert)
+    else: app.dodajoferte.configure(command=None)
     if(app.zasobytoplevel is not None and app.zasobytoplevel.winfo_exists()):
         if(app.zasobytoplevel.nazwa.get() != ""):
             app.zasobytoplevel.add.configure(command=add)
+        else: app.zasobytoplevel.add.configure(command=None)
+    app.addkredyt.configure(command=add_kredyt)
+    if(app.imie.get() != "" and app.nazwisko.get() != ""):
+        app.dodajpracownika.configure(command=add_pracownicy)
+    else: app.dodajpracownika.configure(command=None)
+    if(app.nazwaoplaty.get() != ""):
+        app.dodajoplate.configure(command=add_oplaty)
+    else: app.dodajoplate.configure(command=None)
     zasobylabel = []
     for index, row in zasoby.iterrows():
         zasobylabel.append(row['nazwa'])
@@ -249,12 +314,12 @@ def check():
     app.przychodcaly.configure(text=calyprzychod)
     app.dochodcaly.configure(text=calydochod)
     calykoszt = 0
+    round = app.round.cget("text")
     if(len(oferty.index)>0):
         for index, row in zasoby.iterrows():
             if(row['oferta_id'] < len(oferty.index)):
                 oferta = oferty.iloc[row['oferta_id']]
                 wspolczynnik = wspolczynniki.iloc[oferta['wspolczynniki']]
-                round = app.round.cget("text")
                 popyt = oferta['popyt_roczny'] / 12 * wspolczynnik[round.lower()]
                 cena = popyt * row['jednostka'] / row['sprzedaz'] * row['cena']
                 calykoszt +=  cena
@@ -265,6 +330,32 @@ def check():
         app.kredytyid.delete("0", "end")
         app.kredytyid.insert("0", len(kredyty))
         app.kredytyid.configure(state='disabled')
+    calykredyt = 0
+    for index, row in kredyty.iterrows():
+        if(row['miesiac'] != round):
+            rata = row['ilosc']*(1+row['oprocentowanie'])/row['ilosc_rat']
+            howmany = miesiace.index(round) - miesiace.index(row['miesiac'])
+            value = row['ilosc'] - rata*howmany
+            print(value, row['ilosc'], rata*howmany)
+            if(value != 0):
+                value = 0
+                kredyty.drop(index)
+            calykredyt += value
+        else:
+            calykredyt += row['ilosc']
+    app.kredyt.configure(text=calykredyt)
+    calewynagrodzenie = 0
+    for index, row in pracownicy.iterrows():
+        calewynagrodzenie += row['wynagrodzenie']
+    app.oplatawynagrodzenie.configure(text=calewynagrodzenie)
+    caleoplatymiesieczne = 0
+    caleoplatydodatkowe = 0
+    for index, row in oplaty.iterrows():
+        caleoplatymiesieczne += row['miesieczna']
+        if(row['miesiac'] == round):
+            caleoplatydodatkowe += row['oplata']
+    app.oplatymiesieczne.configure(text=caleoplatymiesieczne)
+    app.oplatadodatkowa.configure(text=caleoplatydodatkowe)
     app.after(1000, check)
 
 def to_sql():
@@ -278,10 +369,14 @@ def to_sql():
         connection.close()
 
 global wspolczynnikidict
-global calyprzychod, calydochod, calykoszt
+global calyprzychod, calydochod, calykoszt, calykredyt, calewynagrodzenie, caleoplatymiesieczne, caleoplatydodatkowe
 calyprzychod = 0
 calydochod = 0
 calykoszt = 0
+calykredyt = 0
+calewynagrodzenie = 0
+caleoplatymiesieczne = 0
+caleoplatydodatkowe = 0
 wspolczynnikidict = {}
 app.after(1000, check)
 app.variable.trace_add('write', menu)
