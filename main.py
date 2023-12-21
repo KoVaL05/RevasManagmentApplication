@@ -248,8 +248,8 @@ def add_pracownicy():
 def add_oplaty():
     oplata = {
         'nazwa': app.nazwaoplaty.get(),
-        'oplata': app.oplata.get(),
-        'miesieczna': app.oplatamiesieczna.get(),
+        'oplata': float(app.oplata.get()),
+        'miesieczna': float(app.oplatamiesieczna.get()),
         'miesiac': app.round.cget("text")
     }
     oplaty.loc[len(oplaty.index)] = oplata
@@ -360,12 +360,12 @@ def check():
 
 def to_sql():
     if(len(oferty.index)>=1):
-        oferty.to_sql(name='oferty', con=connection, if_exists='append', index=False)
+        oferty.to_sql(name='oferty', con=connection, if_exists='replace', index=False)
         wspolczynniki.to_sql(name='wspolczynniki', con=connection, if_exists='append', index=False)
-        zasoby.to_sql(name='zasoby', con=connection, if_exists='append', index=False)
-        pracownicy.to_sql(name='pracownicy', con=connection, if_exists='append', index=False)
-        oplaty.to_sql(name='oplaty', con=connection, if_exists='append', index=False)
-        kredyty.to_sql(name='kredyty', con=connection, if_exists='append', index=False)
+        zasoby.to_sql(name='zasoby', con=connection, if_exists='replace', index=False)
+        pracownicy.to_sql(name='pracownicy', con=connection, if_exists='replace', index=False)
+        oplaty.to_sql(name='oplaty', con=connection, if_exists='replace', index=False)
+        kredyty.to_sql(name='kredyty', con=connection, if_exists='replace', index=False)
         connection.close()
 
 global wspolczynnikidict
