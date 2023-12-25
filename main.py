@@ -172,10 +172,11 @@ def add_ofert():
     app.oferta['values'] = app.optionslist
 
 def add_kredyt():
+    oprocentowanie = float(app.oprocentowanie.get())/100
     kredyt = {
-        'ilosc': app.ilosc.get(),
-        'oprocentowanie': app.oprocentowanie.get(),
-        'ilosc_rat': app.iloscrat.get(),
+        'ilosc': float(app.ilosc.get()),
+        'oprocentowanie': oprocentowanie,
+        'ilosc_rat': int(app.iloscrat.get()),
         'miesiac': app.round.cget("text")
     }   
     kredyty.loc[len(kredyty.index)] = kredyt
@@ -185,7 +186,10 @@ def add_kredyt():
     app.oprocentowanie.insert(0,1)
     app.iloscrat.delete("0", "end")
     app.iloscrat.insert(0,1)
-    print(kredyty)
+    app.kredytid.configure(state='normal')
+    app.kredytid.delete("0", "end")
+    app.kredytid.insert(0,len(kredyty.index)+1)
+    app.kredytid.configure(state='disabled')
 
 def add():
     if(int(app.zasobytoplevel.selected_value.get())==1):
@@ -335,14 +339,13 @@ def check():
         if(row['miesiac'] != round):
             rata = row['ilosc']*(1+row['oprocentowanie'])/row['ilosc_rat']
             howmany = miesiace.index(round) - miesiace.index(row['miesiac'])
-            value = row['ilosc'] - rata*howmany
-            print(value, row['ilosc'], rata*howmany)
+            value = row['ilosc']*(1+row['oprocentowanie']) - rata*howmany
             if(value != 0):
                 value = 0
                 kredyty.drop(index)
             calykredyt += value
         else:
-            calykredyt += row['ilosc']
+            calykredyt += row['ilosc']*(1+row['oprocentowanie'])
     app.kredyt.configure(text=calykredyt)
     calewynagrodzenie = 0
     for index, row in pracownicy.iterrows():
